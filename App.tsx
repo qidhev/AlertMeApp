@@ -3,116 +3,166 @@
  * https://github.com/facebook/react-native
  *
  * @format
+ * @flow
  */
 
 import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import {SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {Colors, Header} from 'react-native/Libraries/NewAppScreen';
+import {MqttService} from "./services/mqtt.service.ts";
+import {ForegroundService} from "./services/foreground.service.ts";
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+// const sleep = (time: any) => new Promise<void>((resolve) => setTimeout(() => resolve(), time));
+//
+// const config = new MqttOptionsBuilder()
+//     .uri('mqtt://test.mosquitto.org:1883')
+//     .clientId('quito-test-client')
+//     .build();
+//
+// const client = new MqttClient(config);
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+const mqtt = new MqttService(
+    'mqtt://test.mosquitto.org:1883',
+    'quito-test-client'
+);
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
+// const taskRandom = async (taskData: any) => {
+//     await new Promise( async (resolve) => {
+//
+//
+//         client.on(
+//             MqttEvent.MESSAGE_RECEIVED,
+//             (topic: string, payload: Uint8Array) => {
+//                 try {
+//                     // Преобразование Uint8Array в Buffer
+//                     // const buffer = Buffer.from(payload);
+//                     // const string = buffer.toString();
+//
+//                     console.log('MESSAGE_RECEIVED', topic, payload.toString())
+//                 } catch (e) {
+//                     console.log("Что-то не так с: ", topic)
+//                 }
+//             }
+//         );
+//         client.on(MqttEvent.CONNECTION_LOST, (error?: any) => {
+//             console.log('CONNECTION_LOST', error)
+//         });
+//         client.on(MqttEvent.EXCEPTION, (error: any) => {
+//             console.log('EXCEPTION', error)
+//         });
+//
+//         await client.connectAsync();
+//
+//         const topic: MqttSubscription = {
+//             topic: "presenceFLKdflks",
+//             qos: 0
+//         }
+//
+//         await client.subscribeAsync(topic);
+//
+//         await client.publishAsync(
+//             'presenceFLKdflks',
+//             Buffer.from("This is test message")
+//         );
+//
+//         for (let i = 0; BackgroundJob.isRunning(); i++) {
+//             await sleep(10000);
+//         }
+//     });
+// };
+
+const options = {
+    taskName: 'Example',
+    taskTitle: 'ExampleTask title',
+    taskDesc: 'ExampleTask desc',
+    taskIcon: {
+        name: 'ic_launcher',
+        type: 'mipmap',
+    },
+    color: '#ff00ff',
+    linkingURI: 'exampleScheme://chat/jane',
+    parameters: {
+        delay: 1000,
+    },
+};
+
+const taskMqtt = async () => {
+    await mqtt.init(
+        (topic: string, payload: string) => {
+            console.log(payload)
+        },
+        (error: any) => {
+            console.log(error)
+        });
+
+    await mqtt.connect();
+    await mqtt.subscribe('testHostJoinJoin')
 }
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+const App = () => {
+    const usingHermes = typeof HermesInternal === 'object' && HermesInternal !== null;
 
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+    /**
+     * Toggles the background task
+     */
+    const toggleBackground = async () => {
+        if (!ForegroundService.isRunning()) {
+            try {
+                await ForegroundService.start(taskMqtt, options);
+                console.log('Successful start!');
+            } catch (e) {
+                console.log('Error', e);
+            }
+        } else {
+            await mqtt.disconnect();
+            await ForegroundService.stop();
+            console.log('Stop background service');
+        }
+    };
+    return (
+        <>
+            <StatusBar barStyle="dark-content" />
+            <SafeAreaView>
+                <ScrollView
+                    contentInsetAdjustmentBehavior="automatic"
+                    style={styles.scrollView}>
+                    <Header />
+                    {!usingHermes ? null : (
+                        <View style={styles.engine}>
+                            <Text style={styles.footer}>Engine: Hermes</Text>
+                        </View>
+                    )}
+                    <View style={styles.body}>
+                        <TouchableOpacity
+                            style={{ height: 100, width: 100, backgroundColor: 'red' }}
+                            onPress={toggleBackground}></TouchableOpacity>
+                    </View>
+                </ScrollView>
+            </SafeAreaView>
+        </>
+    );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
+    scrollView: {
+        backgroundColor: Colors.lighter,
+    },
+    engine: {
+        position: 'absolute',
+        right: 0,
+    },
+    body: {
+        backgroundColor: Colors.white,
+    },
+    footer: {
+        color: Colors.dark,
+        fontSize: 12,
+        fontWeight: '600',
+        padding: 4,
+        paddingRight: 12,
+        textAlign: 'right',
+    },
 });
 
 export default App;
