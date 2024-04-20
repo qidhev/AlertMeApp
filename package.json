@@ -11,9 +11,12 @@
   },
   "dependencies": {
     "@arkyutao/react-native-mqtt": "^0.1.2",
+    "@openrc/react-native-mqtt": "^3.0.8",
+    "@types/react-native-push-notification": "^8.1.4",
     "react": "18.2.0",
     "react-native": "0.73.6",
-    "react-native-background-actions": "^3.0.1"
+    "react-native-background-actions": "^3.0.1",
+    "react-native-push-notification": "^8.1.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
