@@ -1,115 +1,85 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow
- */
-
 import React from 'react';
 import {SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 import {Colors, Header} from 'react-native/Libraries/NewAppScreen';
 import {MqttService} from "./services/mqtt.service.ts";
 import {ForegroundService} from "./services/foreground.service.ts";
-
-// const sleep = (time: any) => new Promise<void>((resolve) => setTimeout(() => resolve(), time));
-//
-// const config = new MqttOptionsBuilder()
-//     .uri('mqtt://test.mosquitto.org:1883')
-//     .clientId('quito-test-client')
-//     .build();
-//
-// const client = new MqttClient(config);
+import PushNotification, { Importance } from 'react-native-push-notification';
 
 const mqtt = new MqttService(
     'mqtt://test.mosquitto.org:1883',
     'quito-test-client'
 );
 
-// const taskRandom = async (taskData: any) => {
-//     await new Promise( async (resolve) => {
-//
-//
-//         client.on(
-//             MqttEvent.MESSAGE_RECEIVED,
-//             (topic: string, payload: Uint8Array) => {
-//                 try {
-//                     // Преобразование Uint8Array в Buffer
-//                     // const buffer = Buffer.from(payload);
-//                     // const string = buffer.toString();
-//
-//                     console.log('MESSAGE_RECEIVED', topic, payload.toString())
-//                 } catch (e) {
-//                     console.log("Что-то не так с: ", topic)
-//                 }
-//             }
-//         );
-//         client.on(MqttEvent.CONNECTION_LOST, (error?: any) => {
-//             console.log('CONNECTION_LOST', error)
-//         });
-//         client.on(MqttEvent.EXCEPTION, (error: any) => {
-//             console.log('EXCEPTION', error)
-//         });
-//
-//         await client.connectAsync();
-//
-//         const topic: MqttSubscription = {
-//             topic: "presenceFLKdflks",
-//             qos: 0
-//         }
-//
-//         await client.subscribeAsync(topic);
-//
-//         await client.publishAsync(
-//             'presenceFLKdflks',
-//             Buffer.from("This is test message")
-//         );
-//
-//         for (let i = 0; BackgroundJob.isRunning(); i++) {
-//             await sleep(10000);
-//         }
-//     });
-// };
-
-const options = {
-    taskName: 'Example',
-    taskTitle: 'ExampleTask title',
-    taskDesc: 'ExampleTask desc',
-    taskIcon: {
-        name: 'ic_launcher',
-        type: 'mipmap',
-    },
-    color: '#ff00ff',
-    linkingURI: 'exampleScheme://chat/jane',
-    parameters: {
-        delay: 1000,
-    },
-};
-
 const taskMqtt = async () => {
     await mqtt.init(
         (topic: string, payload: string) => {
-            console.log(payload)
+            const data = JSON.parse(payload);
+
+            PushNotification.localNotification({
+                channelId: 'channel-id',
+                ticker: 'My Notification Ticker', // (optional)
+                autoCancel: true, // (optional) default: true
+                bigText: data.bigText, // (optional) default: "message" prop
+                subText: data.subText, // (optional) default: none
+                ongoing: true, // (optional) set whether this is an "ongoing" notification
+                invokeApp: false, // (optional) This enable click on actions to bring back the application to foreground or stay in background, default: true
+                title: data.title, // (optional)
+                message: data.message
+            });
+
         },
         (error: any) => {
-            console.log(error)
-        });
+        }
+    );
 
     await mqtt.connect();
     await mqtt.subscribe('testHostJoinJoin')
 }
 
 
+
+
 const App = () => {
+    try {
+        PushNotification.configure({
+            onNotification: function (notification) {
+                console.log("NOTIFICATION:", notification);
+
+                // process the notification
+
+                // (required) Called when a remote is received or opened, or local notification is opened
+                notification.finish("");
+            },
+
+            requestPermissions: false
+        });
+    } catch (e) {}
+
     const usingHermes = typeof HermesInternal === 'object' && HermesInternal !== null;
 
+    PushNotification.deleteChannel("channel-id")
+
+    PushNotification.createChannel(
+        {
+            channelId: "channel-id", // (required)
+            channelName: "My channel", // (required)
+            channelDescription: "A channel to categorise your notifications", // (optional) default: undefined.
+            playSound: false, // (optional) default: true
+            soundName: "default", // (optional) See `soundName` parameter of `localNotification` function
+            importance: Importance.HIGH, // (optional) default: Importance.HIGH. Int value of the Android notification importance
+            vibrate: false, // (optional) default: true. Creates the default vibration pattern if true.
+        },
+        (created: boolean) => console.log(`createChannel 'default-channel-id' returned '${created}'`) // (optional) callback returns whether the channel was created, false means it already existed.
+    );
+
+    // PushNotification.
     /**
      * Toggles the background task
      */
     const toggleBackground = async () => {
         if (!ForegroundService.isRunning()) {
             try {
-                await ForegroundService.start(taskMqtt, options);
+                await ForegroundService.start(taskMqtt);
                 console.log('Successful start!');
             } catch (e) {
                 console.log('Error', e);

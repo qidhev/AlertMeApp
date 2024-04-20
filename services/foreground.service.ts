@@ -2,7 +2,22 @@ import BackgroundJob from 'react-native-background-actions';
 
 export class ForegroundService {
 
-    static async start(callable: Function, options: any) {
+    private static options: any = {
+        taskName: 'Example',
+        taskTitle: 'ExampleTask title',
+        taskDesc: 'ExampleTask desc',
+        taskIcon: {
+            name: 'ic_launcher',
+            type: 'mipmap',
+        },
+        color: '#ff00ff',
+        linkingURI: 'exampleScheme://chat/jane',
+        parameters: {
+            delay: 1000,
+        },
+    };
+
+    static async start(callable: Function) {
         if (BackgroundJob.isRunning()) {
             await BackgroundJob.stop();
         }
@@ -19,7 +34,7 @@ export class ForegroundService {
             });
         }
 
-        await BackgroundJob.start(task, options);
+        await BackgroundJob.start(task, this.options);
     }
 
     static async stop() {
