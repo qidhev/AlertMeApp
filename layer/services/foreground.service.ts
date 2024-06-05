@@ -3,11 +3,11 @@ import BackgroundJob from 'react-native-background-actions';
 export class ForegroundService {
 
     private static options: any = {
-        taskName: 'Example',
-        taskTitle: 'ExampleTask title',
-        taskDesc: 'ExampleTask desc',
+        taskName: 'Фоновый процесс',
+        taskTitle: 'Фоновый процесс',
+        taskDesc: 'Фоновый процесс запущен',
         taskIcon: {
-            name: 'ic_launcher',
+            name: 'ic_logo',
             type: 'mipmap',
         },
         color: '#ff00ff',
@@ -16,16 +16,18 @@ export class ForegroundService {
             delay: 1000,
         },
     };
-
     static async start(callable: Function) {
         if (BackgroundJob.isRunning()) {
             await BackgroundJob.stop();
         }
-
         const sleep = (time: any) => new Promise<void>((resolve) => setTimeout(() => resolve(), time));
         const task = async (taskData: any) => {
-            await new Promise( async (resolve) => {
-                await callable();
+            await new Promise( async (resolve, reject) => {
+                try {
+                    await callable();
+                } catch (e) {
+                    reject(e)
+                }
 
                 // Заглушка для постоянного фонового режима
                 for (let i = 0; BackgroundJob.isRunning(); i++) {
@@ -41,6 +43,16 @@ export class ForegroundService {
         if (!BackgroundJob.isRunning()) return;
 
         await BackgroundJob.stop();
+    }
+
+    static async stopAndAfterStart(callable: Function, afterTimeMs: number) {
+        const sleep = (time: any) => new Promise<void>((resolve) => setTimeout(() => resolve(), time));
+
+        await this.stop();
+
+        await sleep(afterTimeMs);
+
+        await this.start(callable);
     }
 
     static isRunning() {

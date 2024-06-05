@@ -15,26 +15,30 @@ export class MqttService {
             .build();
 
         this.client = new MqttClient(config);
+
+        this.client.init().catch(() => console.error("Что-то пошло не так при инициализации mqtt")); // TODO: Добавить логику переинициализации пока не будет норм
     }
 
-    async init(
+    async createEventMessage(
         callableMessage: Function,
         error: Function
     ) {
-        await this.client.init();
-
         this.addEventMessage(callableMessage);
 
-        // this.client.on(MqttEvent.EXCEPTION, (err: any) => {
-        //     error(err)
-        // });
-        //
-        // this.client.on(MqttEvent.CONNECTION_LOST, (err: any) => {
-        //     error(err)
-        // });
+        this.client.on(MqttEvent.EXCEPTION, (err: any) => {
+            error(err)
+        });
+
+        this.client.on(MqttEvent.CONNECTION_LOST, (err: any) => {
+            error(err)
+        });
     }
 
     async connect() {
+        const is = await this.client.isConnected();
+
+        if (is) return;
+
         await this.client.connectAsync();
     }
 
