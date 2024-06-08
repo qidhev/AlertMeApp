@@ -2,13 +2,14 @@ import {create} from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {findClosestCoordinate} from "../uses/findClosesCoordiante.ts";
 import {getLocation} from "../uses/get-location.ts";
+import {ToastAndroid} from "react-native";
 
 interface Store {
     notification: Notification|null;
     setNotification: (notify: Notification) => void;
     localities: Locality[]|null;
     init: () => void;
-    loadLocations: () => void;
+    loadLocations: (withToast?: boolean) => void;
     currentLocation: Locality|null;
     getCurrentLocation: () => void;
 }
@@ -25,9 +26,8 @@ export const useMainStore = create<Store>((set, get) => ({
     init: async () => {
         const notify = await AsyncStorage.getItem('notification');
 
-
         if (notify !== null) {
-            const {notification} = JSON.parse(notify) as DataNotification
+            const notification = JSON.parse(notify) as Notification
 
             if (notification.id !== get().notification?.id) {
                 set(state => (
@@ -38,7 +38,7 @@ export const useMainStore = create<Store>((set, get) => ({
             }
         }
     },
-    loadLocations: async () => {
+    loadLocations: async (withToast) => {
         const inter = setInterval(async () => {
             const localities = await AsyncStorage.getItem('locations');
 
@@ -52,6 +52,14 @@ export const useMainStore = create<Store>((set, get) => ({
                 ))
 
                 clearInterval(inter);
+
+                if (withToast) {
+                    ToastAndroid.showWithGravity(
+                        'Обновление завершено',
+                        ToastAndroid.SHORT,
+                        ToastAndroid.CENTER,
+                    );
+                }
             }
         }, 1000);
     },
@@ -78,7 +86,7 @@ export const useMainStore = create<Store>((set, get) => ({
         set(state => ({
             currentLocation: localitiesWithAddress.length
                 ? findClosestCoordinate(localitiesWithAddress, coords)
-                : (localities.find(locality => locality.type_id === notification.type_location_id)
+                : (localities.find(locality => locality.type.id === notification.type_location_id)
                     ?? null)
         }))
     }

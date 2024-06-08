@@ -6,6 +6,9 @@ type Locality = {
     latitude?: number;
     longitude?: number;
     city_id: number;
-    type_id: number;
+    type: {
+        id: number;
+        name: string;
+    };
     address?: string;
 }

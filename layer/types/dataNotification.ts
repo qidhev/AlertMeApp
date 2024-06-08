@@ -1,4 +1,7 @@
-type DataNotification = {
+import {TypeNotification} from "./typeNotification.enum.ts";
+
+export type DataNotification = {
     notification: Notification,
-    history: Notification[]
+    type: TypeNotification
 }
+

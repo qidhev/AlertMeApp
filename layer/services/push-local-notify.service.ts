@@ -42,6 +42,7 @@ export class PushLocalNotifyService {
 
     public createLocalNotify(notify: Notify) {
         PushNotification.localNotification({
+            id: '123',
             channelId: this.channel.channelId,
             ticker: 'My Notification Ticker',
             autoCancel: true,
@@ -55,6 +56,10 @@ export class PushLocalNotifyService {
             largeIcon: "ic_logo",
             smallIcon: "ic_logo"
         });
+    }
+
+    public static cancelLocalNotify() {
+        PushNotification.cancelLocalNotification('123')
     }
 
     private createChannel() {

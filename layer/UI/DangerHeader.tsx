@@ -3,11 +3,11 @@ import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import React from "react";
 
-export const DangerHeader = (props: {onBack: Function}) => {
+export const DangerHeader = (props: {onBack: Function, title: string}) => {
     return (
         <View style={{paddingHorizontal: 30, paddingVertical: 20, flexDirection: "row", justifyContent: "space-between", alignItems: "center"}}>
             <View>
-                <Text style={{color: '#fff', fontSize: 20, fontWeight: "700"}}>Danger</Text>
+                <Text style={{color: '#fff', fontSize: 20, fontWeight: "700"}}>{props.title}</Text>
             </View>
 
             <TouchableOpacity activeOpacity={0.7} onPress={() => { props.onBack() }}>
