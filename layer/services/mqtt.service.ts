@@ -1,5 +1,6 @@
 import {MqttClient, MqttEvent, MqttOptionsBuilder, MqttSubscription} from '@arkyutao/react-native-mqtt';
 import {Buffer} from "buffer";
+import BackgroundJob from "react-native-background-actions";
 
 export class MqttService {
     private client: MqttClient;
@@ -16,7 +17,9 @@ export class MqttService {
 
         this.client = new MqttClient(config);
 
-        this.client.init().catch(() => console.error("Что-то пошло не так при инициализации mqtt")); // TODO: Добавить логику переинициализации пока не будет норм
+        this.client.init().catch(() => BackgroundJob.updateNotification({
+            taskDesc: "Что-то пошло не так при инициализации mqtt"
+        })); // TODO: Добавить логику переинициализации пока не будет норм
     }
 
     async createEventMessage(

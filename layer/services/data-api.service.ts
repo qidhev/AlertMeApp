@@ -7,7 +7,7 @@ export class DataApiService {
         const coordinates = await getLocation();
 
         try {
-            const {data} = await axios.post('http://192.168.0.100:8888/api/getData', coordinates);
+            const {data} = await axios.post<DataLocality>('https://alertme.lastlow.online/api/getData', coordinates);
 
             await AsyncStorage.setItem('locations', JSON.stringify(data.locations ?? []));
             await AsyncStorage.setItem('city', JSON.stringify({city: data.city, slug: data.slug}));

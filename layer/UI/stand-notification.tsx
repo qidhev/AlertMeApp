@@ -68,7 +68,6 @@ export const StandNotification = (props: StandNotificationProps) => {
                         )
                         : null
                 }
-                <Button title={"Click"} onPress={() => console.log(locations)} />
             </TouchableOpacity>
         </Element>
     )

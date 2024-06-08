@@ -2,12 +2,17 @@ import {StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import React from "react";
+import moment from "moment";
+import 'moment/locale/ru';
 
 export type HeaderProps = {
     pressUpdate: Function
 }
 
 export const Header = (props: HeaderProps) => {
+    const data = () => {
+        return moment().locale('ru').format('MMM D, YYYY')
+    }
 
     const press = () => {
         props.pressUpdate()
@@ -17,7 +22,7 @@ export const Header = (props: HeaderProps) => {
         <View style={{paddingHorizontal: 30, paddingVertical: 20, flexDirection: "row", justifyContent: "space-between", alignItems: "center"}}>
             <View>
                 <Text style={{color: '#fff', fontSize: 20, fontWeight: "700"}}>AlertMe</Text>
-                <Text style={{color: '#a8a8a8'}}>Today Dec 29,2023</Text>
+                <Text style={{color: '#a8a8a8'}}>Сегодня {data()}</Text>
             </View>
 
             <TouchableOpacity activeOpacity={0.7} onPress={press}>

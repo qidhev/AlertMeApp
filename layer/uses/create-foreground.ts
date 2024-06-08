@@ -3,6 +3,9 @@ import {Topics} from "../types/topics.ts";
 import {MqttService} from "../services/mqtt.service.ts";
 import {ForegroundService} from "../services/foreground.service.ts";
 import {DataApiService} from "../services/data-api.service.ts";
+import BackgroundJob from "react-native-background-actions";
+import {PushLocalNotifyService} from "../services/push-local-notify.service.ts";
+import {Importance} from "react-native-push-notification";
 
 const mqtt = new MqttService(
     'mqtt://test.mosquitto.org:1883',
@@ -10,29 +13,52 @@ const mqtt = new MqttService(
 );
 
 const taskMqtt = async () => {
-    const {slug} = await DataApiService.getStartData();
+    const connectToTopics = async () => {
+        try {
+            await mqtt.connect();
+            await mqtt.subscribe(Topics.notification)
+            await mqtt.subscribe(Topics.danger)
+
+            if (data?.slug) {
+                await mqtt.subscribe(`${Topics.notification}/${data.slug}`);
+                await mqtt.subscribe(`${Topics.danger}/${data.slug}`);
+                await mqtt.subscribe(`${Topics.locality}/${data.slug}`)
+            }
+
+            await BackgroundJob.updateNotification({
+                taskDesc: 'Подключение активно'
+            })
+        } catch (e) {
+            await BackgroundJob.updateNotification({
+                taskDesc: 'Ошибка подключения к mqtt '+ e
+            })
+        }
+    }
+
+    const data = await DataApiService.getStartData();
 
     await mqtt.createEventMessage(
         addNotificationsFromMqtt,
         (error: any) => {
-            throw Error(`Не получается подключится к mqtt ${error}`)
+            BackgroundJob.updateNotification({
+                taskDesc: `Не получается подключится к mqtt ${error}`
+            })
+
+            connectToTopics()
         }
     )
 
-    await mqtt.connect();
-    await mqtt.subscribe(Topics.notification)
-    await mqtt.subscribe(Topics.danger)
-    await mqtt.subscribe(`${Topics.notification}/${slug}`);
-    await mqtt.subscribe(`${Topics.danger}/${slug}`);
+    connectToTopics()
 }
 
 export const createForeground = async () => {
     if (!ForegroundService.isRunning()) {
         try {
             await ForegroundService.start(taskMqtt);
-            console.log('Successful start!');
+            await BackgroundJob.updateNotification({
+                taskDesc: 'Начальный запуск успешный'
+            })
         } catch (e) {
-            await ForegroundService.stopAndAfterStart(taskMqtt, 1000)
             console.log(e)
         }
     }
