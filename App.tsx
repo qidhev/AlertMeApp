@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {StatusBar} from 'react-native';
+import {StatusBar, NativeModules} from 'react-native';
 import {NavigationContainer} from "@react-navigation/native";
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import {createForeground} from "./layer/uses/create-foreground.ts";
@@ -21,11 +21,29 @@ const App = () => {
 
         if (isNewNotify) {
             await AsyncStorage.setItem('is-new-notification', 'false');
+            // @ts-ignore
             navigationRef.current?.navigate("Danger")
         }
     }
 
     useEffect(() => {
+        const { BatteryOptimization } = NativeModules;
+        async function checkBatteryOptimization() {
+            try {
+                const isIgnoring = await BatteryOptimization.isIgnoringBatteryOptimizations();
+                if (!isIgnoring) {
+                    const result = await BatteryOptimization.requestIgnoreBatteryOptimizations();
+                    console.log('Battery optimization ignored:', result);
+                } else {
+                    console.log('Battery optimization already ignored');
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        checkBatteryOptimization();
+
         createForeground();
         loadLocations();
     }, []);
@@ -35,6 +53,7 @@ const App = () => {
         PushLocalNotifyService.addEventInClickNotify(() => {
             init()
             AsyncStorage.setItem('is-new-notification', 'false');
+            // @ts-ignore
             navigationRef.current?.navigate("Danger")
         })
 
